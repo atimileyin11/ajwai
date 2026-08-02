@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajwai — AI freshness and demand intelligence for food distribution</title>
+<meta name="description" content="Ajwai grades produce at intake with computer vision, forecasts demand per depot, and ranks every crate by how fast it needs to move. Built for food distributors and market wholesalers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C1D1A;
+  --deep:#123832;
+  --chill:#1B4F46;
+  --paper:#EEF3EF;
+  --white:#FBFDFB;
+  --fresh:#33A06B;
+  --ripe:#E5A33A;
+  --past:#B23A55;
+  --muted:#69827B;
+  --line:rgba(12,29,26,.14);
+  --line-dark:rgba(238,243,239,.16);
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ripeness:linear-gradient(90deg,var(--fresh) 0%,#8FB43F 38%,var(--ripe) 66%,var(--past) 100%);
+  --pad:clamp(1.25rem,5vw,5.5rem);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--body);font-size:clamp(1rem,.97rem + .18vw,1.08rem);
+  line-height:1.62;-webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--display);font-weight:800;line-height:1.04;letter-spacing:-.025em;margin:0;}
+h1{font-size:clamp(2.5rem,1.5rem + 4.4vw,5.1rem);}
+h2{font-size:clamp(1.9rem,1.3rem + 2.4vw,3.1rem);}
+h3{font-size:1.15rem;font-weight:700;letter-spacing:-.01em;}
+p{margin:0 0 1rem;}
+a{color:inherit;}
+img{max-width:100%;}
+:focus-visible{outline:3px solid var(--ripe);outline-offset:3px;}
+
+.wrap{max-width:1180px;margin:0 auto;padding-inline:var(--pad);}
+.band{padding-block:clamp(3.5rem,7vw,6.5rem);}
+.band--dark{background:var(--ink);color:var(--paper);}
+.band--deep{background:var(--deep);color:var(--paper);}
+.band--white{background:var(--white);}
+
+.eyebrow{
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;
+}
+.band--dark .eyebrow,.band--deep .eyebrow{color:#8FB0A6;}
+.eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--ripeness);}
+.lede{font-size:clamp(1.08rem,1rem + .5vw,1.35rem);max-width:62ch;color:var(--chill);}
+.band--dark .lede,.band--deep .lede{color:#C3D6CF;}
+
+/* ---------- nav ---------- */
+.nav{
+  position:sticky;top:0;z-index:50;background:rgba(12,29,26,.94);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line-dark);color:var(--paper);
+}
+.nav__in{display:flex;align-items:center;gap:1.5rem;height:66px;}
+.logo{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.03em;text-decoration:none;}
+.logo__mark{width:22px;height:22px;border-radius:6px;background:var(--ripeness);flex:none;}
+.nav__links{display:none;gap:1.4rem;margin-left:auto;font-size:.9rem;}
+.nav__links a{text-decoration:none;color:#C3D6CF;}
+.nav__links a:hover{color:var(--white);}
+.nav .btn{margin-left:auto;}
+@media(min-width:900px){
+  .nav__links{display:flex;}
+  .nav .btn{margin-left:0;}
+}
+
+.btn{
+  display:inline-block;font-family:var(--body);font-weight:600;font-size:.95rem;
+  padding:.72rem 1.35rem;border-radius:999px;text-decoration:none;border:1px solid transparent;
+  transition:transform .15s ease,background .15s ease;
+}
+.btn--primary{background:var(--fresh);color:#04140E;}
+.btn--primary:hover{background:#3EBB7D;transform:translateY(-1px);}
+.btn--ghost{border-color:var(--line-dark);color:var(--paper);}
+.btn--ghost:hover{background:rgba(238,243,239,.09);}
+.btn--dark{background:var(--ink);color:var(--paper);}
+.btn--dark:hover{transform:translateY(-1px);}
+
+/* ---------- hero ---------- */
+.hero{background:var(--ink);color:var(--paper);padding-block:clamp(3.2rem,7vw,6rem) clamp(3rem,6vw,5rem);position:relative;overflow:hidden;}
+.hero::after{
+  content:"";position:absolute;inset:auto -20% -60% 40%;height:70%;
+  background:radial-gradient(ellipse at center,rgba(51,160,107,.20),transparent 65%);pointer-events:none;
+}
+.hero__grid{display:grid;gap:clamp(2.5rem,5vw,4rem);position:relative;z-index:1;}
+@media(min-width:1000px){.hero__grid{grid-template-columns:1.05fr .95fr;align-items:center;}}
+.hero h1 .accent{
+  background:var(--ripeness);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero__sub{margin-top:1.5rem;font-size:clamp(1.05rem,1rem + .45vw,1.3rem);color:#C3D6CF;max-width:52ch;}
+.hero__cta{display:flex;flex-wrap:wrap;gap:.75rem;margin-top:2rem;}
+.hero__note{font-family:var(--mono);font-size:.78rem;color:#7E9A92;margin-top:1.5rem;}
+
+/* ---------- signature: freshness clock ---------- */
+.clock{
+  background:#0F2723;border:1px solid var(--line-dark);border-radius:18px;
+  padding:clamp(1.25rem,3vw,1.9rem);
+}
+.clock__head{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;font-family:var(--mono);font-size:.75rem;color:#8FB0A6;letter-spacing:.08em;text-transform:uppercase;}
+.clock__crate{font-family:var(--display);font-size:1.5rem;font-weight:700;color:var(--white);letter-spacing:-.02em;margin:.35rem 0 1.4rem;}
+.clock__track{position:relative;height:10px;border-radius:999px;background:rgba(238,243,239,.12);overflow:hidden;}
+.clock__fill{position:absolute;inset:0;width:0;border-radius:999px;background:var(--ripeness);animation:fill 2.2s cubic-bezier(.22,.75,.3,1) .3s forwards;}
+@keyframes fill{to{width:64%;}}
+.clock__marks{display:flex;justify-content:space-between;margin-top:.7rem;font-family:var(--mono);font-size:.72rem;color:#7E9A92;}
+.clock__rows{margin-top:1.6rem;display:grid;gap:.55rem;}
+.row{display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:center;padding:.7rem .85rem;border-radius:11px;background:rgba(238,243,239,.05);font-size:.9rem;}
+.row__name{color:var(--white);font-weight:500;}
+.row__hrs{font-family:var(--mono);font-size:.8rem;color:#8FB0A6;}
+.tag{font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;padding:.22rem .55rem;border-radius:999px;white-space:nowrap;}
+.tag--hold{background:rgba(51,160,107,.18);color:#6BD3A0;}
+.tag--move{background:rgba(229,163,58,.18);color:#F0BE6C;}
+.tag--now{background:rgba(178,58,85,.2);color:#EC8AA0;}
+
+/* ---------- generic layout pieces ---------- */
+.two{display:grid;gap:clamp(2rem,4vw,3.5rem);}
+@media(min-width:900px){.two{grid-template-columns:1fr 1fr;}}
+.cards{display:grid;gap:1rem;margin-top:2.5rem;}
+@media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1000px){.cards--3{grid-template-columns:repeat(3,1fr);}}
+.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:1.5rem;}
+.band--dark .card,.band--deep .card{background:rgba(238,243,239,.05);border-color:var(--line-dark);}
+.card h3{margin-bottom:.55rem;}
+.card p{margin:0;font-size:.95rem;color:var(--chill);}
+.band--dark .card p,.band--deep .card p{color:#B7CCC5;}
+.card__idx{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.1em;display:block;margin-bottom:.75rem;}
+
+.cost{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden;margin-top:2.5rem;}
+@media(min-width:700px){.cost{grid-template-columns:repeat(3,1fr);}}
+.cost__cell{background:var(--paper);padding:1.5rem;}
+.cost__cell h3{font-size:1rem;margin-bottom:.4rem;}
+.cost__cell p{margin:0;font-size:.93rem;color:var(--chill);}
+
+.steps{counter-reset:step;margin-top:2.5rem;display:grid;gap:0;}
+.step{display:grid;grid-template-columns:auto 1fr;gap:1.2rem;padding:1.5rem 0;border-top:1px solid var(--line);}
+.step:last-child{border-bottom:1px solid var(--line);}
+.step__n{font-family:var(--mono);font-size:.8rem;color:var(--muted);padding-top:.28rem;}
+.step p{margin:.4rem 0 0;color:var(--chill);font-size:.95rem;max-width:60ch;}
+
+.spec{margin-top:2.5rem;border-top:1px solid var(--line-dark);}
+.spec__row{display:grid;gap:.4rem 2rem;padding:1.35rem 0;border-bottom:1px solid var(--line-dark);}
+@media(min-width:800px){.spec__row{grid-template-columns:220px 1fr;}}
+.spec__k{font-family:var(--mono);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:#8FB0A6;padding-top:.2rem;}
+.spec__v{margin:0;color:#D3E2DC;font-size:.97rem;}
+
+/* ---------- product mockup ---------- */
+.shot{background:var(--white);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 24px 50px -34px rgba(12,29,26,.5);}
+.shot__bar{display:flex;align-items:center;gap:.5rem;padding:.7rem 1rem;border-bottom:1px solid var(--line);background:#E6EDE8;}
+.dot{width:9px;height:9px;border-radius:50%;background:#C2CFC8;}
+.shot__title{font-family:var(--mono);font-size:.72rem;color:var(--muted);margin-left:.5rem;}
+.shot__body{padding:1.3rem;}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;}
+.kpi{border:1px solid var(--line);border-radius:12px;padding:.85rem;}
+.kpi__l{font-family:var(--mono);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+.kpi__v{font-family:var(--display);font-size:1.5rem;font-weight:700;letter-spacing:-.02em;margin-top:.25rem;}
+.bars{margin-top:1.1rem;display:grid;gap:.6rem;}
+.bar{display:grid;grid-template-columns:88px 1fr 46px;gap:.7rem;align-items:center;font-size:.82rem;}
+.bar__t{position:relative;height:8px;border-radius:999px;background:#E2E9E4;overflow:hidden;}
+.bar__f{position:absolute;inset:0 auto 0 0;border-radius:999px;}
+.bar__n{font-family:var(--mono);font-size:.75rem;color:var(--muted);text-align:right;}
+.caption{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-top:.9rem;}
+
+/* ---------- tables ---------- */
+.tbl{width:100%;border-collapse:collapse;margin-top:2.5rem;font-size:.95rem;}
+.tbl th,.tbl td{text-align:left;padding:.95rem 1rem;border-bottom:1px solid var(--line);vertical-align:top;}
+.tbl th{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500;}
+.tbl td:first-child{font-weight:600;white-space:nowrap;}
+.band--dark .tbl th,.band--deep .tbl th{color:#8FB0A6;}
+.band--dark .tbl th,.band--dark .tbl td,.band--deep .tbl th,.band--deep .tbl td{border-color:var(--line-dark);}
+
+.pills{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem;}
+.pill{font-family:var(--mono);font-size:.75rem;padding:.4rem .8rem;border-radius:999px;border:1px solid var(--line);background:var(--white);}
+.band--dark .pill,.band--deep .pill{border-color:var(--line-dark);background:rgba(238,243,239,.05);color:#C3D6CF;}
+
+.status{display:inline-flex;align-items:center;gap:.55rem;font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;padding:.45rem .9rem;border-radius:999px;border:1px solid var(--line-dark);color:#8FB0A6;}
+.status__d{width:8px;height:8px;border-radius:50%;background:var(--ripe);}
+
+/* ---------- team ---------- */
+.people{display:grid;gap:1rem;margin-top:2.5rem;}
+@media(min-width:700px){.people{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1000px){.people{grid-template-columns:repeat(3,1fr);}}
+.person{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:1.4rem;}
+.person__av{width:44px;height:44px;border-radius:12px;background:var(--ripeness);opacity:.85;margin-bottom:1rem;}
+.person__r{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.2rem;}
+.person p{font-size:.9rem;color:var(--chill);margin:.7rem 0 0;}
+
+/* ---------- contact ---------- */
+.form{display:grid;gap:.6rem;margin-top:1.6rem;}
+.form .hp{position:absolute;left:-9999px;}
+.sr{position:absolute;left:-9999px;}
+.form select{
+  padding:.8rem 1rem;border-radius:999px;border:1px solid var(--line-dark);
+  background:rgba(238,243,239,.06);color:var(--paper);font-family:var(--body);font-size:.95rem;
+}
+.form select option{background:var(--deep);color:var(--paper);}
+.form button{justify-self:start;}
+.form input{
+  width:100%;padding:.8rem 1rem;border-radius:999px;border:1px solid var(--line-dark);
+  background:rgba(238,243,239,.06);color:var(--paper);font-family:var(--body);font-size:.95rem;
+}
+.form input::placeholder{color:#7E9A92;}
+.msg{font-family:var(--mono);font-size:.8rem;color:#6BD3A0;margin-top:.9rem;min-height:1.2em;}
+
+details{border-top:1px solid var(--line);padding:1.1rem 0;}
+details summary{cursor:pointer;font-weight:600;font-family:var(--display);font-size:1.05rem;}
+details p{margin-top:.9rem;font-size:.92rem;color:var(--chill);max-width:75ch;}
+
+.foot{background:var(--ink);color:#9FB8B1;padding-block:3rem;font-size:.88rem;}
+.foot__grid{display:grid;gap:2rem;}
+@media(min-width:800px){.foot__grid{grid-template-columns:1.4fr 1fr 1fr;}}
+.foot a{color:#C3D6CF;text-decoration:none;display:block;margin-bottom:.5rem;}
+.foot a:hover{color:var(--white);}
+.foot h4{font-family:var(--mono);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#7E9A92;margin:0 0 .9rem;font-weight:500;}
+.foot__base{margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--line-dark);font-size:.8rem;color:#7E9A92;}
+
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.001ms!important;transition-duration:.001ms!important;}
+  .clock__fill{width:64%;}
+  .reveal{opacity:1;transform:none;}
+  html{scroll-behavior:auto;}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav__in">
+    <a class="logo" href="#top"><span class="logo__mark"></span>Ajwai</a>
+    <div class="nav__links">
+      <a href="#problem">Problem</a>
+      <a href="#ai">AI technology</a>
+      <a href="#infrastructure">Infrastructure</a>
+      <a href="#market">Market</a>
+      <a href="demo.html">Live demo</a>
+        <a href="#roadmap">Roadmap</a>
+      <a href="#team">Team</a>
+      <a href="demo.html">Demo</a>
+    </div>
+    <a class="btn btn--primary" href="#demo">Request demo</a>
+  </div>
+</nav>
+
+<!-- ===== HERO ===== -->
+<header class="hero" id="top">
+  <div class="wrap hero__grid">
+    <div>
+      <div class="eyebrow">AI for perishable food distribution</div>
+      <h1>Know which crate <span class="accent">dies first.</span></h1>
+      <p class="hero__sub">Ajwai grades incoming produce with computer vision, predicts each lot's remaining shelf life, and forecasts depot-level demand — so distributors sell the right stock, to the right buyer, before it turns.</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href="#demo">Request demo</a>
+        <a class="btn btn--ghost" href="demo.html">Try the live demo</a>
+      </div>
+      <p class="hero__note">MVP in development · Beta opening to selected distributors</p>
+    </div>
+
+    <!-- signature element: the freshness clock -->
+    <div class="clock" aria-label="Sample shelf-life prediction for an intake lot">
+      <div class="clock__head"><span>Lot INT-2291 · tomato, grade B</span><span>Ajwai</span></div>
+      <div class="clock__crate">61 hours of sell window left</div>
+      <div class="clock__track"><div class="clock__fill"></div></div>
+      <div class="clock__marks"><span>Intake</span><span>Sell now</span><span>Loss</span></div>
+      <div class="clock__rows">
+        <div class="row"><span class="row__name">Pepper · INT-2288</span><span class="row__hrs">96h</span><span class="tag tag--hold">Hold</span></div>
+        <div class="row"><span class="row__name">Tomato · INT-2291</span><span class="row__hrs">61h</span><span class="tag tag--move">Move</span></div>
+        <div class="row"><span class="row__name">Leafy greens · INT-2294</span><span class="row__hrs">14h</span><span class="tag tag--now">Sell today</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== PROBLEM ===== -->
+<section class="band band--white" id="problem">
+  <div class="wrap">
+    <div class="eyebrow">The problem</div>
+    <div class="two">
+      <div>
+        <h2>Spoilage is priced in as bad luck. It is actually an information gap.</h2>
+      </div>
+      <div>
+        <p class="lede">A food distributor buys hundreds of crates a week with no reliable read on what condition they arrived in. Quality is judged by eye, in seconds, by whoever is on the loading bay. Stock is then dispatched roughly in the order it was stacked.</p>
+        <p class="lede">By the time a crate is visibly bad, the money is already gone — and the buyer who would have taken it two days earlier bought from somebody else.</p>
+      </div>
+    </div>
+    <div class="cost">
+      <div class="cost__cell">
+        <h3>Who carries the loss</h3>
+        <p>Mid-size distributors, market wholesalers, and cold-store operators moving fruit, vegetables, and other short-life goods between farms and urban buyers.</p>
+      </div>
+      <div class="cost__cell">
+        <h3>What it costs them</h3>
+        <p>Every discarded crate is paid-for stock, paid-for transport, and paid-for storage written off at once — on categories where margins are thin to begin with.</p>
+      </div>
+      <div class="cost__cell">
+        <h3>Why it compounds</h3>
+        <p>Unsold stock forces panic discounting, which distorts pricing for the next cycle and damages the buyer relationships that make consistent volume possible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SOLUTION ===== -->
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow">The solution</div>
+    <div class="two">
+      <div>
+        <h2>A shelf-life clock on every lot, from the moment it hits the bay.</h2>
+        <p class="lede" style="margin-top:1.2rem">Ajwai turns intake into data. A phone or fixed camera photographs each lot; the model grades it, estimates remaining sell window from that grade plus storage and transit conditions, and ranks the whole warehouse by urgency. Demand forecasting then matches the most urgent stock to the buyers most likely to take it now.</p>
+      </div>
+      <div class="cards" style="margin-top:0">
+        <div class="card"><h3>Grade at intake</h3><p>Consistent quality scoring that does not depend on who is on shift.</p></div>
+        <div class="card"><h3>Predict the window</h3><p>Hours of sell time remaining, updated as conditions change.</p></div>
+        <div class="card"><h3>Rank the floor</h3><p>A live dispatch order across every lot in storage.</p></div>
+        <div class="card"><h3>Match the buyer</h3><p>Demand forecasts that point urgent stock at the right customer.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== AI TECHNOLOGY ===== -->
+<section class="band band--dark" id="ai">
+  <div class="wrap">
+    <div class="eyebrow">AI technology</div>
+    <h2>What the models actually do</h2>
+    <p class="lede" style="margin-top:1.2rem">Ajwai is not a spreadsheet with an assistant bolted on. The product does not exist without the models — grading, shelf-life estimation, and demand forecasting are the platform.</p>
+    <div class="spec">
+      <div class="spec__row">
+        <div class="spec__k">Data the AI uses</div>
+        <p class="spec__v">Intake photographs of each lot, category and variety labels, supplier and origin records, transit duration, storage temperature and humidity readings, historical sale timing, and per-buyer order history.</p>
+      </div>
+      <div class="spec__row">
+        <div class="spec__k">What it detects</div>
+        <p class="spec__v">Surface defects, bruising, mould, colour and ripeness stage, size distribution, and lot-level grade consistency from images captured in ordinary warehouse lighting.</p>
+      </div>
+      <div class="spec__row">
+        <div class="spec__k">What it predicts</div>
+        <p class="spec__v">Remaining sell window in hours per lot, spoilage risk under current storage conditions, and expected demand per product, per depot, per day.</p>
+      </div>
+      <div class="spec__row">
+        <div class="spec__k">What it generates</div>
+        <p class="spec__v">A ranked dispatch order, buyer-matching suggestions, markdown timing recommendations, and a written daily intake report summarising quality and risk across the warehouse.</p>
+      </div>
+      <div class="spec__row">
+        <div class="spec__k">Models and techniques</div>
+        <p class="spec__v">Convolutional and vision-transformer image classifiers for grading and defect detection; gradient-boosted and sequence models for time-series demand forecasting; survival-style modelling for shelf-life estimation; a large language model for report generation and natural-language querying of warehouse state.</p>
+      </div>
+      <div class="spec__row">
+        <div class="spec__k">Why accelerated compute</div>
+        <p class="spec__v">Grading has to return a result while the truck is still being unloaded. GPU inference keeps per-image latency low enough for the bay, and GPU training lets vision models be retrained per crop, per season, and per region as new labelled intake data arrives.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FEATURES ===== -->
+<section class="band band--white">
+  <div class="wrap">
+    <div class="eyebrow">Product features</div>
+    <h2>Built around one shift a day, not one report a quarter.</h2>
+    <div class="cards cards--3">
+      <div class="card"><span class="card__idx">01</span><h3>Intake grading</h3><p>Photograph a lot on any phone and get a grade, defect breakdown, and confidence score before it is stacked.</p></div>
+      <div class="card"><span class="card__idx">02</span><h3>Shelf-life clock</h3><p>Every lot carries a live countdown that adjusts to storage temperature and time already spent in transit.</p></div>
+      <div class="card"><span class="card__idx">03</span><h3>Dispatch ranking</h3><p>A single ordered list of what leaves the warehouse next, refreshed as new stock arrives.</p></div>
+      <div class="card"><span class="card__idx">04</span><h3>Demand forecasting</h3><p>Expected volume per product and depot, so buying decisions stop being made on last week's feeling.</p></div>
+      <div class="card"><span class="card__idx">05</span><h3>Buyer matching</h3><p>Urgent stock surfaced against the buyers whose order patterns suit it, with suggested pricing.</p></div>
+      <div class="card"><span class="card__idx">06</span><h3>Loss reporting</h3><p>Written and exportable records of what spoiled, where it came from, and which suppliers underperform.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOW IT WORKS ===== -->
+<section class="band">
+  <div class="wrap">
+    <div class="eyebrow">How it works</div>
+    <h2>Four steps, inside the existing workflow.</h2>
+    <div class="steps">
+      <div class="step"><div class="step__n">STEP 01</div><div><h3>Capture at the bay</h3><p>Warehouse staff photograph each incoming lot in the Ajwai app and scan or enter the supplier reference. No new hardware is required to start.</p></div></div>
+      <div class="step"><div class="step__n">STEP 02</div><div><h3>Grade and score</h3><p>The vision model returns a grade, defect breakdown, and an initial shelf-life estimate within seconds, attached to the lot record.</p></div></div>
+      <div class="step"><div class="step__n">STEP 03</div><div><h3>Rank and alert</h3><p>The dashboard reorders the floor by urgency. Supervisors are alerted when a lot crosses into its final sell window.</p></div></div>
+      <div class="step"><div class="step__n">STEP 04</div><div><h3>Sell and learn</h3><p>Sale and loss outcomes feed back into the models, so grading and demand forecasts improve for that crop, region, and season.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRODUCT VISUALS ===== -->
+<section class="band band--white">
+  <div class="wrap">
+    <div class="eyebrow">Product</div>
+    <div class="two" style="align-items:center">
+      <div>
+        <h2>The warehouse, ranked by hours remaining.</h2>
+        <p class="lede" style="margin-top:1.2rem">The operations view is the product's centre of gravity: one screen a supervisor can read from across the room, showing what came in, what condition it is in, and what has to go out today.</p>
+        <p class="caption">Interface preview from the MVP in development. Figures shown are illustrative sample data.</p>
+      </div>
+      <div class="shot">
+        <div class="shot__bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="shot__title">ajwai — depot overview</span></div>
+        <div class="shot__body">
+          <div class="kpis">
+            <div class="kpi"><div class="kpi__l">Lots in store</div><div class="kpi__v">148</div></div>
+            <div class="kpi"><div class="kpi__l">Sell today</div><div class="kpi__v" style="color:var(--past)">12</div></div>
+            <div class="kpi"><div class="kpi__l">Graded today</div><div class="kpi__v">37</div></div>
+          </div>
+          <div class="bars">
+            <div class="bar"><span>Tomato</span><span class="bar__t"><span class="bar__f" style="width:34%;background:var(--past)"></span></span><span class="bar__n">34%</span></div>
+            <div class="bar"><span>Pepper</span><span class="bar__t"><span class="bar__f" style="width:62%;background:var(--ripe)"></span></span><span class="bar__n">62%</span></div>
+            <div class="bar"><span>Onion</span><span class="bar__t"><span class="bar__f" style="width:88%;background:var(--fresh)"></span></span><span class="bar__n">88%</span></div>
+            <div class="bar"><span>Leafy greens</span><span class="bar__t"><span class="bar__f" style="width:19%;background:var(--past)"></span></span><span class="bar__n">19%</span></div>
+            <div class="bar"><span>Plantain</span><span class="bar__t"><span class="bar__f" style="width:71%;background:var(--ripe)"></span></span><span class="bar__n">71%</span></div>
+          </div>
+          <p class="caption">Bars show percentage of sell window remaining, averaged per category.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== INFRASTRUCTURE ===== -->
+<section class="band band--deep" id="infrastructure">
+  <div class="wrap">
+    <div class="eyebrow">Technology &amp; infrastructure</div>
+    <h2>How we use AWS</h2>
+    <p class="lede" style="margin-top:1.2rem">Ajwai runs on cloud infrastructure for image storage, model inference, API hosting, real-time alerting, analytics, and user management. Our planned AWS architecture:</p>
+    <table class="tbl">
+      <thead><tr><th>Service</th><th>What it does for Ajwai</th></tr></thead>
+      <tbody>
+        <tr><td>Amazon S3</td><td>Stores intake images and labelled training sets, with lifecycle rules moving older captures to cheaper tiers.</td></tr>
+        <tr><td>Amazon RDS</td><td>Holds lot records, supplier and buyer data, sale outcomes, and the audit trail behind every prediction.</td></tr>
+        <tr><td>AWS Lambda / ECS</td><td>Runs the grading API and scheduled forecasting jobs, scaling with intake volume rather than sitting idle overnight.</td></tr>
+        <tr><td>Amazon SageMaker</td><td>Trains, versions, and serves the grading and shelf-life models, and hosts retraining as regional data accumulates.</td></tr>
+        <tr><td>Amazon Bedrock</td><td>Powers the written daily intake reports and natural-language querying of warehouse state.</td></tr>
+        <tr><td>Amazon CloudFront</td><td>Serves the dashboard and app assets quickly to depots on constrained connections.</td></tr>
+        <tr><td>Amazon Cognito</td><td>Manages depot-level accounts and role separation between operators, supervisors, and owners.</td></tr>
+        <tr><td>Amazon CloudWatch</td><td>Monitors inference latency, job failures, and model drift so grading quality is observable in production.</td></tr>
+      </tbody>
+    </table>
+
+    <h2 style="margin-top:3.5rem">How we use NVIDIA</h2>
+    <p class="lede" style="margin-top:1.2rem">Grading is a computer vision workload, so accelerated computing is on the critical path rather than a nice-to-have.</p>
+    <table class="tbl">
+      <thead><tr><th>Technology</th><th>Where it applies</th></tr></thead>
+      <tbody>
+        <tr><td>CUDA</td><td>Training the grading and defect-detection models on labelled intake imagery.</td></tr>
+        <tr><td>TensorRT</td><td>Optimising those models for low-latency inference so results return while unloading is still in progress.</td></tr>
+        <tr><td>Triton Inference Server</td><td>Serving multiple crop-specific models behind one endpoint as the catalogue grows.</td></tr>
+        <tr><td>Jetson</td><td>Planned edge deployment for fixed bay cameras at depots with unreliable connectivity.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== WHY NOW ===== -->
+<section class="band">
+  <div class="wrap">
+    <div class="two">
+      <div>
+        <div class="eyebrow">Why now</div>
+        <h2>Cameras and cloud inference finally cost less than the losses.</h2>
+      </div>
+      <div>
+        <p class="lede">Food distribution across Africa is consolidating: buyers want consistent quality and reliable delivery, and distributors who cannot supply it lose contracts to those who can. At the same time, smartphone cameras in every warehouse and affordable GPU inference in the cloud have made per-lot quality assessment cheap enough to run on ordinary stock, not just premium export shipments.</p>
+        <p class="lede">The category has been managed by intuition because measuring it was uneconomic. That constraint has lifted, and the operators who instrument their intake first will hold the margin advantage.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== MARKET ===== -->
+<section class="band band--white" id="market">
+  <div class="wrap">
+    <div class="eyebrow">Market opportunity</div>
+    <h2>Focused on the operators who already count their losses.</h2>
+    <div class="cards">
+      <div class="card"><h3>Target users</h3><p>Mid-size fresh-produce distributors, market wholesalers, cold-store operators, agro-processing buyers, and grocery and restaurant supply chains.</p></div>
+      <div class="card"><h3>Launch markets</h3><p>Nigeria first, with expansion planned across Ghana, Kenya, Rwanda, and South Africa as depot density supports it.</p></div>
+      <div class="card"><h3>Revenue model</h3><p>Per-depot subscription, tiered by monthly intake volume, with usage-based AI grading credits and enterprise plans for multi-depot groups.</p></div>
+      <div class="card"><h3>Growth plan</h3><p>Land single depots, expand across a distributor's network, then extend the buyer side into a demand marketplace built on accumulated quality data.</p></div>
+    </div>
+    <div class="pills">
+      <span class="pill">Fresh produce</span>
+      <span class="pill">Cold storage</span>
+      <span class="pill">Wholesale markets</span>
+      <span class="pill">Agro-processing</span>
+      <span class="pill">Grocery supply</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TRACTION ===== -->
+<section class="band band--dark">
+  <div class="wrap">
+    <div class="eyebrow">Traction &amp; status</div>
+    <div class="two">
+      <div>
+        <span class="status"><span class="status__d"></span>MVP in development · demo live</span>
+        <h2 style="margin-top:1.5rem">Where the product stands today.</h2>
+      </div>
+      <div>
+        <p class="lede">A working grading demo is live on this site. It runs a full measurement pipeline in the browser — background separation, colour maturity, defect detection, and temperature-adjusted shelf-life estimation — and returns a grade and sell window for any produce photo you give it.</p>
+        <p class="lede">Next is the trained model. We are recruiting a small number of Lagos depots as design partners to contribute labelled intake imagery and test the grading flow against their own stock. Demand forecasting is specified and scheduled behind that work.</p>
+        <a class="btn btn--primary" href="demo.html" style="margin-top:.6rem">Try the live grading demo</a>
+        <a class="btn btn--ghost" href="#demo" style="margin-top:.6rem">Join the beta list</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== ROADMAP ===== -->
+<section class="band" id="roadmap">
+  <div class="wrap">
+    <div class="eyebrow">Roadmap</div>
+    <h2>What we are building next.</h2>
+    <table class="tbl">
+      <thead><tr><th>Phase</th><th>Milestone</th></tr></thead>
+      <tbody>
+        <tr><td>Phase 1</td><td>MVP: intake capture, grading model, and shelf-life scoring for core vegetable categories.</td></tr>
+        <tr><td>Phase 2</td><td>Design-partner depots: labelled intake data collection and per-crop model training.</td></tr>
+        <tr><td>Phase 3</td><td>Demand forecasting and buyer matching released to beta accounts.</td></tr>
+        <tr><td>Phase 4</td><td>Full AWS production deployment with monitoring, retraining pipelines, and role-based access.</td></tr>
+        <tr><td>Phase 5</td><td>GPU-accelerated inference at scale and edge grading for low-connectivity depots.</td></tr>
+        <tr><td>Phase 6</td><td>Multi-depot enterprise tier and expansion into additional African markets.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ===== TEAM ===== -->
+<section class="band band--white" id="team">
+  <div class="wrap">
+    <div class="eyebrow">Team</div>
+    <h2>Who is building it.</h2>
+    <p class="lede" style="margin-top:1.2rem">A small technical team based in Lagos, building in the open. The repository is public and the grading demo runs on this site.</p>
+    <div class="people">
+      <div class="person"><div class="person__av"></div><h3>Adeola Timileyin</h3><div class="person__r">Founder &amp; technical lead</div><p>Software developer and computer science student at Kwara State University, working across AI evaluation and applied machine learning. Has built and shipped several production web products, and now leads Ajwai's architecture, the grading pipeline, and the shelf-life model. Started Ajwai after looking at how much perishable stock is written off in Nigerian distribution for want of a measurement anyone can act on. <a href="https://www.linkedin.com/in/adeola-timileyin-4599a2325" target="_blank" rel="noopener">LinkedIn</a></p></div>
+      <div class="person"><div class="person__av"></div><h3>Abdulfaruk</h3><div class="person__r">AI engineer</div><p>Leads model development for Ajwai — the computer vision grading model, defect detection, and shelf-life estimation, including training against labelled intake imagery collected with design-partner depots.</p></div>
+      <div class="person"><div class="person__av"></div><h3>Samuel William</h3><div class="person__r">Operations lead</div><p>Leads depot engagement and product operations — recruiting design partners, running the intake workflow with them, and translating what happens on the loading bay into product requirements.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACT ===== -->
+<section class="band band--deep" id="demo">
+  <div class="wrap">
+    <div class="two" style="align-items:center">
+      <div>
+        <div class="eyebrow">Get started</div>
+        <h2>See Ajwai on your own stock.</h2>
+        <p class="lede" style="margin-top:1.2rem">Tell us what you move and where you store it, and we will walk you through a grading demo on your produce. Beta places are limited while the models are being tuned per crop.</p>
+      </div>
+      <div>
+        <form class="form" name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/thanks.html">
+          <input type="hidden" name="form-name" value="waitlist">
+          <p class="hp"><label>Leave this empty: <input name="bot-field"></label></p>
+          <label for="email" class="sr">Work email</label>
+          <input type="email" id="email" name="email" placeholder="Work email" autocomplete="email" required>
+          <label for="company" class="sr">Company</label>
+          <input type="text" id="company" name="company" placeholder="Company or market name" autocomplete="organization" required>
+          <label for="moves" class="sr">What you move</label>
+          <select id="moves" name="what_you_move" required>
+            <option value="" disabled selected>What do you move?</option>
+            <option>Tomato, pepper, onion</option>
+            <option>Leafy greens</option>
+            <option>Plantain, banana, fruit</option>
+            <option>Mixed produce</option>
+            <option>Something else</option>
+          </select>
+          <label for="city" class="sr">Depot location</label>
+          <input type="text" id="city" name="depot_location" placeholder="Depot location" required>
+          <button class="btn btn--primary" type="submit">Request demo</button>
+        </form>
+        <p style="color:#8FB0A6;font-size:.9rem;margin-top:.5rem">Or email us directly at <a href="mailto:hello@ajwai.site" style="color:#6BD3A0">hello@ajwai.site</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LEGAL ===== -->
+<section class="band band--white" id="legal">
+  <div class="wrap">
+    <div class="eyebrow">Trust &amp; compliance</div>
+    <h2>How we handle your data.</h2>
+    <div class="cards cards--3">
+      <div class="card"><h3>Privacy</h3><p>We collect only what a prediction or an account needs, and customer operational data belongs to the customer. <a href="privacy.html">Read the Privacy Policy</a>.</p></div>
+      <div class="card"><h3>Terms</h3><p>Grades, shelf-life estimates, and forecasts are decision support, not certifications. <a href="terms.html">Read the Terms of Use</a>.</p></div>
+      <div class="card"><h3>Security</h3><p>Encrypted storage, role-based access, dedicated identity management, and logged infrastructure access. Ajwai does not replace statutory food safety inspection.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot__grid">
+      <div>
+        <a class="logo" href="#top" style="color:var(--white);margin-bottom:.9rem"><span class="logo__mark"></span>Ajwai</a>
+        <p style="max-width:34ch">AI freshness and demand intelligence for perishable food distribution.</p>
+      </div>
+      <div>
+        <h4>Product</h4>
+        <a href="#problem">Problem</a>
+        <a href="#ai">AI technology</a>
+        <a href="#infrastructure">Infrastructure</a>
+        <a href="#roadmap">Roadmap</a>
+      </div>
+      <div>
+        <h4>Company</h4>
+        <a href="#team">Team</a>
+        <a href="privacy.html">Privacy policy</a>
+        <a href="terms.html">Terms of use</a>
+        <a href="mailto:hello@ajwai.site">hello@ajwai.site</a>
+      </div>
+    </div>
+    <div class="foot__base">
+      &copy; <span id="yr">2026</span> Ajwai. All rights reserved.
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('yr').textContent = new Date().getFullYear();
+
+
+var io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+}, {threshold:0, rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.band .wrap > *').forEach(function(el){ el.classList.add('reveal'); io.observe(el); });
+</script>
+</body>
+</html>

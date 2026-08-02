@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live grading demo — Ajwai</title>
+<meta name="description" content="Upload a photo of a produce lot and Ajwai returns a grade, defect breakdown, and estimated sell window.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C1D1A;--deep:#123832;--chill:#1B4F46;--paper:#EEF3EF;--white:#FBFDFB;
+  --fresh:#33A06B;--ripe:#E5A33A;--past:#B23A55;--muted:#69827B;
+  --line:rgba(12,29,26,.14);--line-dark:rgba(238,243,239,.16);
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ripeness:linear-gradient(90deg,var(--fresh) 0%,#8FB43F 38%,var(--ripe) 66%,var(--past) 100%);
+  --pad:clamp(1.25rem,5vw,5.5rem);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--ink);color:var(--paper);font-family:var(--body);line-height:1.6;-webkit-font-smoothing:antialiased;}
+h1,h2,h3{font-family:var(--display);font-weight:800;letter-spacing:-.025em;line-height:1.05;margin:0;}
+h1{font-size:clamp(2rem,1.4rem + 2.6vw,3.2rem);}
+h2{font-size:1.15rem;font-weight:700;}
+h3{font-size:.95rem;font-weight:700;}
+p{margin:0 0 1rem;}
+a{color:#6BD3A0;}
+:focus-visible{outline:3px solid var(--ripe);outline-offset:3px;}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:var(--pad);}
+
+.nav{background:var(--ink);border-bottom:1px solid var(--line-dark);}
+.nav__in{display:flex;align-items:center;gap:1rem;height:66px;}
+.logo{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.03em;text-decoration:none;color:var(--paper);}
+.logo__mark{width:22px;height:22px;border-radius:6px;background:var(--ripeness);flex:none;}
+.nav a.back{margin-left:auto;font-size:.9rem;color:#C3D6CF;text-decoration:none;}
+
+.head{padding-block:clamp(2.2rem,5vw,3.4rem) 1.5rem;}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#8FB0A6;display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;}
+.eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--ripeness);}
+.lede{color:#C3D6CF;max-width:62ch;font-size:1.05rem;}
+
+.grid{display:grid;gap:1.5rem;padding-bottom:4rem;}
+@media(min-width:940px){.grid{grid-template-columns:1fr 1fr;align-items:start;}}
+.panel{background:#0F2723;border:1px solid var(--line-dark);border-radius:18px;padding:clamp(1.1rem,3vw,1.6rem);}
+
+.drop{
+  border:2px dashed rgba(238,243,239,.22);border-radius:14px;padding:2.2rem 1.2rem;text-align:center;
+  cursor:pointer;transition:border-color .15s ease,background .15s ease;
+}
+.drop:hover,.drop.over{border-color:var(--fresh);background:rgba(51,160,107,.07);}
+.drop strong{display:block;font-family:var(--display);font-size:1.1rem;margin-bottom:.3rem;}
+.drop span{font-size:.87rem;color:#8FB0A6;}
+input[type=file]{display:none;}
+
+.controls{display:grid;gap:1rem;margin-top:1.3rem;}
+.field label{display:block;font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:#8FB0A6;margin-bottom:.45rem;}
+select,input[type=range]{width:100%;}
+select{
+  padding:.65rem .8rem;border-radius:10px;border:1px solid var(--line-dark);
+  background:rgba(238,243,239,.06);color:var(--paper);font-family:var(--body);font-size:.95rem;
+}
+input[type=range]{accent-color:var(--fresh);}
+.rangeval{font-family:var(--mono);font-size:.8rem;color:var(--paper);float:right;}
+
+.btn{display:inline-block;font-weight:600;font-size:.95rem;padding:.72rem 1.35rem;border-radius:999px;border:1px solid transparent;cursor:pointer;font-family:var(--body);text-decoration:none;}
+.btn--primary{background:var(--fresh);color:#04140E;}
+.btn--primary:hover{background:#3EBB7D;}
+.btn--primary[disabled]{opacity:.45;cursor:not-allowed;}
+.btn--ghost{border-color:var(--line-dark);color:var(--paper);background:none;}
+.btn--ghost:hover{background:rgba(238,243,239,.09);}
+.btnrow{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.3rem;}
+
+.stage{position:relative;border-radius:12px;overflow:hidden;background:#08120F;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;}
+.stage canvas{max-width:100%;max-height:100%;display:block;}
+.stage__empty{font-family:var(--mono);font-size:.78rem;color:#5E7A72;padding:1rem;text-align:center;}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;margin-top:.8rem;font-family:var(--mono);font-size:.72rem;color:#8FB0A6;}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.4rem;vertical-align:middle;}
+
+.verdict{display:none;}
+.verdict.show{display:block;}
+.grade{display:flex;align-items:baseline;gap:.9rem;flex-wrap:wrap;}
+.grade__b{font-family:var(--display);font-size:3.2rem;font-weight:800;letter-spacing:-.04em;line-height:1;}
+.grade__l{font-family:var(--mono);font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;color:#8FB0A6;}
+.hours{font-family:var(--display);font-size:1.6rem;font-weight:700;letter-spacing:-.02em;margin-top:1.4rem;}
+.track{position:relative;height:10px;border-radius:999px;background:rgba(238,243,239,.12);overflow:hidden;margin-top:.7rem;}
+.track__f{position:absolute;inset:0 auto 0 0;border-radius:999px;background:var(--ripeness);width:0;transition:width .7s cubic-bezier(.22,.75,.3,1);}
+.marks{display:flex;justify-content:space-between;margin-top:.55rem;font-family:var(--mono);font-size:.7rem;color:#7E9A92;}
+.action{margin-top:1.2rem;padding:.85rem 1rem;border-radius:11px;font-size:.93rem;border:1px solid var(--line-dark);}
+
+.metrics{width:100%;border-collapse:collapse;margin-top:1.4rem;font-size:.9rem;}
+.metrics th,.metrics td{text-align:left;padding:.6rem .2rem;border-bottom:1px solid var(--line-dark);}
+.metrics th{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:#8FB0A6;font-weight:500;}
+.metrics td:last-child{text-align:right;font-family:var(--mono);font-size:.85rem;}
+
+.queue{margin-top:1.4rem;display:grid;gap:.5rem;}
+.qrow{display:grid;grid-template-columns:1fr auto auto;gap:.7rem;align-items:center;padding:.65rem .8rem;border-radius:10px;background:rgba(238,243,239,.05);font-size:.88rem;}
+.qname{color:var(--white);}
+.qh{font-family:var(--mono);font-size:.78rem;color:#8FB0A6;}
+.tag{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px;white-space:nowrap;}
+.tag--hold{background:rgba(51,160,107,.18);color:#6BD3A0;}
+.tag--move{background:rgba(229,163,58,.18);color:#F0BE6C;}
+.tag--now{background:rgba(178,58,85,.2);color:#EC8AA0;}
+.empty{font-family:var(--mono);font-size:.78rem;color:#5E7A72;}
+
+.err{color:#EC8AA0;font-size:.9rem;margin-top:1rem;min-height:1.2em;}
+details{border-top:1px solid var(--line-dark);padding:1.1rem 0;margin-top:2rem;}
+summary{cursor:pointer;font-family:var(--display);font-weight:700;font-size:1rem;}
+details p,details li{font-size:.9rem;color:#B7CCC5;}
+details ul{padding-left:1.1rem;}
+.foot{border-top:1px solid var(--line-dark);padding-block:2rem;font-size:.85rem;color:#7E9A92;}
+.foot a{color:#C3D6CF;text-decoration:none;margin-right:1.2rem;}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.001ms!important;}}
+</style>
+</head>
+<body>
+
+<nav class="nav"><div class="wrap nav__in">
+  <a class="logo" href="index.html"><span class="logo__mark"></span>Ajwai</a>
+  <a class="back" href="index.html">← Back to site</a>
+</div></nav>
+
+<header class="head"><div class="wrap">
+  <div class="eyebrow">Live demo · runs in your browser</div>
+  <h1>Grade a lot from a photo.</h1>
+  <p class="lede">Upload or snap a picture of a produce lot. Ajwai isolates the produce from the background, measures colour maturity, surface defects, and lot consistency, then estimates how long the sell window has left at your storage temperature.</p>
+</div></header>
+
+<div class="wrap grid">
+
+  <!-- LEFT: input -->
+  <section class="panel">
+    <h2>1 · Capture the lot</h2>
+    <div class="drop" id="drop" role="button" tabindex="0" aria-label="Upload a photo of a produce lot">
+      <strong>Tap to upload or take a photo</strong>
+      <span>JPG or PNG · plain background works best</span>
+    </div>
+    <input type="file" id="file" accept="image/*" capture="environment">
+
+    <div class="controls">
+      <div class="field">
+        <label for="crop">Crop</label>
+        <select id="crop">
+          <option value="tomato">Tomato</option>
+          <option value="plantain">Plantain / banana</option>
+          <option value="pepper">Pepper</option>
+          <option value="leafy">Leafy greens</option>
+          <option value="onion">Onion</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="temp">Storage temperature <span class="rangeval" id="tempv">25°C</span></label>
+        <input type="range" id="temp" min="2" max="38" value="25" step="1">
+      </div>
+    </div>
+
+    <div class="btnrow">
+      <button class="btn btn--primary" id="run" disabled>Grade this lot</button>
+      <button class="btn btn--ghost" id="add" disabled>Add to dispatch list</button>
+    </div>
+    <p class="err" id="err" role="status"></p>
+
+    <div class="stage" style="margin-top:1.3rem">
+      <canvas id="cv" width="480" height="360"></canvas>
+      <div class="stage__empty" id="stageEmpty">No image loaded</div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--past)"></i>Flagged defect pixels</span>
+      <span><i style="background:rgba(238,243,239,.25)"></i>Excluded background</span>
+    </div>
+  </section>
+
+  <!-- RIGHT: output -->
+  <section class="panel">
+    <h2>2 · Result</h2>
+    <div class="verdict" id="verdict">
+      <div class="grade" style="margin-top:1.2rem">
+        <span class="grade__b" id="gradeB">—</span>
+        <span class="grade__l" id="gradeL"></span>
+      </div>
+      <div class="hours" id="hours"></div>
+      <div class="track"><div class="track__f" id="trackF"></div></div>
+      <div class="marks"><span>Now</span><span>Sell window</span><span>Loss</span></div>
+      <div class="action" id="action"></div>
+
+      <table class="metrics">
+        <thead><tr><th>Measurement</th><th></th></tr></thead>
+        <tbody id="mrows"></tbody>
+      </table>
+    </div>
+    <p class="empty" id="verdictEmpty">Load an image and press <strong>Grade this lot</strong>.</p>
+
+    <h2 style="margin-top:2.2rem">3 · Dispatch list</h2>
+    <p class="empty" id="queueEmpty">Graded lots appear here, ranked by urgency.</p>
+    <div class="queue" id="queue"></div>
+  </section>
+</div>
+
+<div class="wrap">
+  <details>
+    <summary>How this demo works — and what it is not</summary>
+    <p>Everything on this page runs locally in your browser. No image is uploaded to a server.</p>
+    <ul>
+      <li>The image is drawn to a canvas and downsampled, then every pixel is converted from RGB to HSV.</li>
+      <li>Background is excluded by saturation and brightness thresholds, isolating a produce mask. If the mask covers too little of the frame, the demo asks for a cleaner shot rather than guessing.</li>
+      <li>Within the mask we compute hue distribution (green, yellow, red bands), a defect fraction from dark and brown pixels, and circular hue standard deviation as a lot-consistency measure.</li>
+      <li>Shelf life starts from a per-crop baseline, is reduced by maturity and defect load, then scaled by temperature using a Q10 coefficient of 2 — respiration rate roughly doubles for every 10°C rise.</li>
+    </ul>
+    <p><strong>What this is not:</strong> this is classical computer vision, not the trained grading model. The CNN grader described on our main site is being trained on labelled intake imagery collected with pilot depots. This demo exists to show the measurement pipeline and the decision output working end to end; expect it to be approximate, and expect it to be confused by cluttered backgrounds.</p>
+  </details>
+</div>
+
+<footer class="foot"><div class="wrap">
+  <a href="index.html">Home</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:hello@ajwai.site">hello@ajwai.site</a>
+</div></footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var CROPS = {
+    tomato:   {label:"Tomato",           base:96,  mode:"ripening"},
+    plantain: {label:"Plantain/banana",  base:168, mode:"ripening"},
+    pepper:   {label:"Pepper",           base:120, mode:"degrading"},
+    leafy:    {label:"Leafy greens",     base:36,  mode:"degrading"},
+    onion:    {label:"Onion",            base:480, mode:"degrading"}
+  };
+
+  var fileEl=document.getElementById('file'), drop=document.getElementById('drop'),
+      runBtn=document.getElementById('run'), addBtn=document.getElementById('add'),
+      cv=document.getElementById('cv'), ctx=cv.getContext('2d',{willReadFrequently:true}),
+      err=document.getElementById('err'), stageEmpty=document.getElementById('stageEmpty'),
+      cropEl=document.getElementById('crop'), tempEl=document.getElementById('temp'),
+      tempv=document.getElementById('tempv'), verdict=document.getElementById('verdict'),
+      verdictEmpty=document.getElementById('verdictEmpty'), queueEl=document.getElementById('queue'),
+      queueEmpty=document.getElementById('queueEmpty');
+
+  var img=null, last=null, lots=[], counter=2290;
+
+  tempEl.addEventListener('input',function(){ tempv.textContent=tempEl.value+'°C'; });
+
+  drop.addEventListener('click',function(){ fileEl.click(); });
+  drop.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fileEl.click(); } });
+  ['dragenter','dragover'].forEach(function(t){ drop.addEventListener(t,function(e){ e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave','drop'].forEach(function(t){ drop.addEventListener(t,function(e){ e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop',function(e){ if(e.dataTransfer.files && e.dataTransfer.files[0]) load(e.dataTransfer.files[0]); });
+  fileEl.addEventListener('change',function(){ if(fileEl.files[0]) load(fileEl.files[0]); });
+
+  function load(f){
+    if(!/^image\//.test(f.type)){ err.textContent='That file is not an image.'; return; }
+    err.textContent='';
+    var url=URL.createObjectURL(f);
+    var i=new Image();
+    i.onload=function(){
+      img=i;
+      draw(i);
+      stageEmpty.style.display='none';
+      runBtn.disabled=false;
+      URL.revokeObjectURL(url);
+    };
+    i.onerror=function(){ err.textContent='Could not read that image.'; URL.revokeObjectURL(url); };
+    i.src=url;
+  }
+
+  function draw(i){
+    var maxW=480, maxH=360;
+    var s=Math.min(maxW/i.width, maxH/i.height, 1);
+    cv.width=Math.max(1,Math.round(i.width*s));
+    cv.height=Math.max(1,Math.round(i.height*s));
+    ctx.drawImage(i,0,0,cv.width,cv.height);
+  }
+
+  function rgb2hsv(r,g,b){
+    r/=255; g/=255; b/=255;
+    var mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn, h=0;
+    if(d!==0){
+      if(mx===r) h=60*(((g-b)/d)%6);
+      else if(mx===g) h=60*(((b-r)/d)+2);
+      else h=60*(((r-g)/d)+4);
+    }
+    if(h<0) h+=360;
+    return [h, mx===0?0:d/mx, mx];
+  }
+
+  function analyse(){
+    var w=cv.width, h=cv.height;
+    var data=ctx.getImageData(0,0,w,h);
+    var px=data.data;
+    var total=w*h, mask=0, defect=0;
+    var green=0, yellow=0, red=0, brown=0;
+    var sinSum=0, cosSum=0;
+    var flags=new Uint8Array(total);
+
+    for(var p=0,i=0;p<total;p++,i+=4){
+      var hsv=rgb2hsv(px[i],px[i+1],px[i+2]);
+      var H=hsv[0], S=hsv[1], V=hsv[2];
+      var isProduce = S>=0.18 && V>=0.12;
+      if(!isProduce){ flags[p]=2; continue; }
+      mask++;
+      var rad=H*Math.PI/180;
+      sinSum+=Math.sin(rad); cosSum+=Math.cos(rad);
+
+      var isBrown = (H>=10 && H<=50 && S<0.55 && V<0.58);
+      var isDark  = V<0.28;
+      if(isBrown||isDark){ defect++; brown++; flags[p]=1; continue; }
+
+      if(H>=70 && H<=175) green++;
+      else if(H>40 && H<70) yellow++;
+      else if(H<=20 || H>=335) red++;
+    }
+
+    if(mask/total < 0.08){
+      return {error:'Could not isolate produce from the background. Try a closer shot against a plain surface, in even light.'};
+    }
+
+    var m=mask;
+    var gF=green/m, yF=yellow/m, rF=red/m, dF=defect/m;
+
+    // circular spread of hue -> lot consistency
+    var R=Math.sqrt(sinSum*sinSum+cosSum*cosSum)/m;
+    var spread=Math.sqrt(Math.max(0,-2*Math.log(Math.max(R,1e-6))))*180/Math.PI;
+
+    return {
+      coverage: m/total,
+      green:gF, yellow:yF, red:rF, defect:dF,
+      spread: Math.min(spread,180),
+      flags:flags, w:w, h:h
+    };
+  }
+
+  function score(a, cropKey, temp){
+    var c=CROPS[cropKey];
+    var maturity, decay;
+    if(c.mode==='ripening'){
+      maturity=Math.min(1, a.red + a.yellow*0.6);
+      decay=Math.min(1, a.defect*1.4);
+    } else {
+      maturity=0;
+      decay=Math.min(1, a.yellow*0.8 + a.defect*1.4);
+    }
+
+    var consistency=Math.max(0, 1 - a.spread/70);
+
+    var s=100;
+    s -= Math.min(55, a.defect*190);
+    s -= (1-consistency)*22;
+    if(c.mode==='ripening') s -= Math.max(0, maturity-0.65)*60;
+    else s -= decay*30;
+    s=Math.round(Math.max(0,Math.min(100,s)));
+
+    var grade = s>=78?'A' : s>=58?'B' : s>=40?'C' : 'R';
+    var gLabel = {A:'Premium',B:'Standard',C:'Marginal',R:'Below spec'}[grade];
+
+    var factor;
+    if(c.mode==='ripening') factor=(1-maturity*0.7);
+    else factor=(1-decay*0.8);
+    factor *= (1-Math.min(0.85, a.defect*1.8));
+    factor = Math.max(0.04, factor);
+
+    var q10=Math.pow(2,(25-temp)/10);
+    var hours=Math.round(Math.max(2, Math.min(720, c.base*factor*q10)));
+
+    var urgency = hours<=24 ? 'now' : hours<=72 ? 'move' : 'hold';
+    var action = {
+      now:'Dispatch today. This lot will not survive another storage cycle.',
+      move:'Prioritise in the next two dispatch runs, ahead of newer stock.',
+      hold:'Safe to hold. Release after more urgent lots clear.'
+    }[urgency];
+
+    return {sc:Math.round(s), grade:grade, gLabel:gLabel, hours:hours, urgency:urgency,
+            action:action, maturity:maturity, decay:decay, consistency:consistency};
+  }
+
+  function overlay(a){
+    var d=ctx.getImageData(0,0,a.w,a.h), px=d.data;
+    for(var p=0,i=0;p<a.w*a.h;p++,i+=4){
+      if(a.flags[p]===1){
+        px[i]=Math.round(px[i]*0.25+178*0.75);
+        px[i+1]=Math.round(px[i+1]*0.25+58*0.75);
+        px[i+2]=Math.round(px[i+2]*0.25+85*0.75);
+      } else if(a.flags[p]===2){
+        var g=Math.round((px[i]+px[i+1]+px[i+2])/3*0.45+30);
+        px[i]=g; px[i+1]=g; px[i+2]=g;
+      }
+    }
+    ctx.putImageData(d,0,0);
+  }
+
+  function pct(x){ return (x*100).toFixed(1)+'%'; }
+
+  runBtn.addEventListener('click',function(){
+    if(!img) return;
+    err.textContent='';
+    draw(img);
+    var a=analyse();
+    if(a.error){ err.textContent=a.error; return; }
+    var temp=parseInt(tempEl.value,10);
+    var r=score(a, cropEl.value, temp);
+    overlay(a);
+
+    document.getElementById('gradeB').textContent='Grade '+(r.grade==='R'?'—':r.grade);
+    document.getElementById('gradeB').style.color = r.grade==='A'?'var(--fresh)':r.grade==='B'?'#8FB43F':r.grade==='C'?'var(--ripe)':'var(--past)';
+    document.getElementById('gradeL').textContent=r.gLabel+' · quality index '+r.sc+'/100';
+
+    var hrs=r.hours;
+    document.getElementById('hours').textContent = hrs>=48
+      ? Math.round(hrs/24)+' days of sell window left'
+      : hrs+' hours of sell window left';
+
+    var full=CROPS[cropEl.value].base*Math.pow(2,(25-temp)/10);
+    var remain=Math.max(4,Math.min(96, Math.round(hrs/full*100)));
+    document.getElementById('trackF').style.width=remain+'%';
+
+    var act=document.getElementById('action');
+    act.textContent=r.action;
+    act.style.borderColor = r.urgency==='now'?'rgba(178,58,85,.5)':r.urgency==='move'?'rgba(229,163,58,.45)':'rgba(51,160,107,.4)';
+
+    var rows=[
+      ['Produce coverage of frame',pct(a.coverage)],
+      ['Surface defect fraction',pct(a.defect)],
+      ['Green / yellow / red mix',pct(a.green)+' · '+pct(a.yellow)+' · '+pct(a.red)],
+      ['Lot colour consistency',pct(r.consistency)],
+      ['Hue spread (lower is tighter)',a.spread.toFixed(1)+'°'],
+      ['Storage temperature',temp+'°C'],
+      ['Baseline for crop at 25°C',CROPS[cropEl.value].base+' h']
+    ];
+    document.getElementById('mrows').innerHTML=rows.map(function(x){
+      return '<tr><td>'+x[0]+'</td><td>'+x[1]+'</td></tr>';
+    }).join('');
+
+    verdict.classList.add('show');
+    verdictEmpty.style.display='none';
+    addBtn.disabled=false;
+    last={crop:CROPS[cropEl.value].label, hours:hrs, urgency:r.urgency, grade:r.grade};
+  });
+
+  addBtn.addEventListener('click',function(){
+    if(!last) return;
+    counter++;
+    lots.push({id:'INT-'+counter, crop:last.crop, hours:last.hours, urgency:last.urgency, grade:last.grade});
+    lots.sort(function(x,y){ return x.hours-y.hours; });
+    queueEmpty.style.display='none';
+    queueEl.innerHTML=lots.map(function(l){
+      var tag = l.urgency==='now'?'<span class="tag tag--now">Sell today</span>'
+              : l.urgency==='move'?'<span class="tag tag--move">Move</span>'
+              : '<span class="tag tag--hold">Hold</span>';
+      var h = l.hours>=48 ? Math.round(l.hours/24)+'d' : l.hours+'h';
+      return '<div class="qrow"><span class="qname">'+l.crop+' · '+l.id+' · Grade '+(l.grade==='R'?'—':l.grade)+'</span><span class="qh">'+h+'</span>'+tag+'</div>';
+    }).join('');
+    addBtn.disabled=true;
+  });
+})();
+</script>
+</body>
+</html>

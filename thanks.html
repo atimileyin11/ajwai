@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thanks — Ajwai</title>
+<meta name="description" content="Your request has been received.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0C1D1A;--deep:#123832;--chill:#1B4F46;--paper:#EEF3EF;--white:#FBFDFB;
+  --fresh:#33A06B;--ripe:#E5A33A;--past:#B23A55;--muted:#69827B;
+  --line:rgba(12,29,26,.14);--line-dark:rgba(238,243,239,.16);
+  --display:"Bricolage Grotesque",system-ui,sans-serif;
+  --body:"Public Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --ripeness:linear-gradient(90deg,var(--fresh) 0%,#8FB43F 38%,var(--ripe) 66%,var(--past) 100%);
+  --pad:clamp(1.25rem,5vw,5.5rem);
+}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:1.02rem;line-height:1.68;-webkit-font-smoothing:antialiased;}
+h1,h2{font-family:var(--display);font-weight:800;letter-spacing:-.025em;line-height:1.06;margin:0;}
+h1{font-size:clamp(2.1rem,1.5rem + 2.6vw,3.4rem);}
+h2{font-size:1.3rem;margin:2.6rem 0 .8rem;}
+p{margin:0 0 1rem;max-width:72ch;}
+a{color:var(--chill);}
+:focus-visible{outline:3px solid var(--ripe);outline-offset:3px;}
+.wrap{max-width:860px;margin:0 auto;padding-inline:var(--pad);}
+.nav{background:var(--ink);color:var(--paper);border-bottom:1px solid var(--line-dark);}
+.nav__in{display:flex;align-items:center;height:66px;max-width:1180px;margin:0 auto;padding-inline:var(--pad);}
+.logo{display:flex;align-items:center;gap:.6rem;font-family:var(--display);font-weight:800;font-size:1.3rem;letter-spacing:-.03em;text-decoration:none;color:var(--paper);}
+.logo__mark{width:22px;height:22px;border-radius:6px;background:var(--ripeness);flex:none;}
+.head{background:var(--ink);color:var(--paper);padding-block:clamp(2.5rem,6vw,4rem);}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:#8FB0A6;display:flex;align-items:center;gap:.6rem;margin-bottom:1.1rem;}
+.eyebrow::before{content:"";width:26px;height:3px;border-radius:2px;background:var(--ripeness);}
+.updated{font-family:var(--mono);font-size:.78rem;color:#7E9A92;margin-top:1.2rem;}
+main{padding-block:clamp(2.5rem,5vw,4rem);}
+main p{color:var(--chill);}
+.foot{background:var(--ink);color:#9FB8B1;padding-block:2.5rem;font-size:.85rem;margin-top:2rem;}
+.foot a{color:#C3D6CF;text-decoration:none;margin-right:1.2rem;}
+.foot a:hover{color:var(--white);}
+</style>
+</head>
+<body>
+<nav class="nav"><div class="nav__in"><a class="logo" href="index.html"><span class="logo__mark"></span>Ajwai</a></div></nav>
+<header class="head"><div class="wrap">
+  <div class="eyebrow">Request received</div>
+  <h1>Thanks — we have your details.</h1>
+  <p class="updated">We reply to demo requests within two working days.</p>
+</div></header>
+<main><div class="wrap">
+  <h2>What happens next</h2>
+  <p>One of us will email you from <a href="mailto:hello@ajwai.site">hello@ajwai.site</a> to arrange a short call. We will ask what you move, how you store it, and where losses currently show up — that conversation shapes what we build next.</p>
+  <p>If you have not heard from us in two working days, reply directly to <a href="mailto:hello@ajwai.site">hello@ajwai.site</a> and we will pick it up.</p>
+  <h2>In the meantime</h2>
+  <p>Try the <a href="demo.html">live grading demo</a> on a photo of your own stock. It runs entirely in your browser and takes about twenty seconds.</p>
+  <p><a href="index.html">← Back to the site</a></p>
+</div></main>
+<footer class="foot"><div class="wrap">
+  <a href="index.html">Home</a><a href="privacy.html">Privacy Policy</a><a href="terms.html">Terms of Use</a><a href="mailto:hello@ajwai.site">hello@ajwai.site</a>
+  <p style="margin-top:1.2rem">&copy; <span id="yr">2026</span> Ajwai. All rights reserved.</p>
+</div></footer>
+<script>document.getElementById('yr').textContent=new Date().getFullYear();</script>
+</body>
+</html>
